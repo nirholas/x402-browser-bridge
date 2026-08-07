@@ -134,6 +134,8 @@ curl -X POST <BASE_URL>/run/demo-booking \
 
 These three are checked ahead of the paywall. You are **not** charged:
 
+These checks run on the attempt that carries `X-PAYMENT`, before the payment is verified or settled — so they cost nothing. An unpaid request always gets the 402 challenge first, whatever flow name it names: that is how a directory or an agent discovers the route's price and input schema.
+
 | status | `error` | fix |
 |---|---|---|
 | 404 | `FLOW_NOT_FOUND` | Wrong flow name. `available` lists the real ones; `GET /flows` has the detail. |

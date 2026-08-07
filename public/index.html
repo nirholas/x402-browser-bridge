@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>x402-browser-bridge — website flows as paid APIs</title>
+<meta name="description" content="Turns any website flow into an x402-paid API — declare a flow in YAML, Puppeteer executes it, and the extracted data, screenshots and step log come back in the response body. Pay in USDC on Base or Solana; the client picks the rail. WARNING: automating a website you do not own may breach its terms of service. The bundled flows target pages this repository serves itself; the operator of any deployment is responsible for the legality of every flow it serves.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<link rel="canonical" href="https://nirholas.github.io/x402-browser-bridge/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="x402-browser-bridge">
+<meta property="og:title" content="x402-browser-bridge — website flows as paid APIs">
+<meta property="og:description" content="Turns any website flow into an x402-paid API — declare a flow in YAML, Puppeteer executes it, and the extracted data, screenshots and step log come back in the response body. Pay in USDC on Base or Solana; the client picks the rail. WARNING: automating a website you do not own may breach its terms of service. The bundled flows target pages this repository serves itself; the operator of any deployment is responsible for the legality of every flow it serves.">
+<meta property="og:image" content="/og.svg">
+<meta property="og:url" content="https://nirholas.github.io/x402-browser-bridge/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="x402-browser-bridge — website flows as paid APIs">
+<meta name="twitter:description" content="Turns any website flow into an x402-paid API — declare a flow in YAML, Puppeteer executes it, and the extracted data, screenshots and step log come back in the response body. Pay in USDC on Base or Solana; the client picks the rail. WARNING: automating a website you do not own may breach its terms of service. The bundled flows target pages this repository serves itself; the operator of any deployment is responsible for the legality of every flow it serves.">
+<meta name="twitter:image" content="/og.svg">
+<meta name="theme-color" content="#e8590c">
+<style>
+  :root {
+    --accent: #e8590c;
+    --bg: #ffffff; --bg-soft: #f6f8fa; --fg: #1a1a1a; --fg-soft: #57606a; --border: #d8dee4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0d1117; --bg-soft: #161b22; --fg: #e6edf3; --fg-soft: #9198a1; --border: #30363d; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 800px; margin: 0 auto; padding: 56px 20px 72px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .mark {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; border-radius: 12px; background: var(--accent);
+    color: #fff; font-size: 22px; font-weight: 700; margin-bottom: 18px;
+  }
+  h1 { font-size: clamp(28px, 5vw, 40px); margin: 0 0 12px; letter-spacing: -.02em; }
+  .tagline { font-size: clamp(16px, 2.4vw, 19px); color: var(--fg-soft); margin: 0 0 24px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 30px; }
+  .pill {
+    font-size: 13px; padding: 4px 11px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--bg-soft); color: var(--fg-soft);
+  }
+  .pill strong { color: var(--fg); font-weight: 600; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .07em; color: var(--fg-soft);
+       margin: 36px 0 12px; font-weight: 600; }
+  .table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .table th { text-align: left; font-weight: 600; color: var(--fg-soft); padding: 6px 10px 6px 0;
+               border-bottom: 1px solid var(--border); font-size: 12.5px; text-transform: uppercase;
+               letter-spacing: .05em; }
+  .table td { padding: 9px 10px 9px 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .table code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13.5px; }
+  .m { color: var(--accent); font-weight: 600; }
+  .price { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .desc { color: var(--fg-soft); }
+  .scroll { overflow-x: auto; }
+  pre { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px;
+         padding: 14px 16px; overflow-x: auto; font-size: 13.5px; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  footer { margin-top: 42px; padding-top: 20px; border-top: 1px solid var(--border);
+            color: var(--fg-soft); font-size: 14px; }
+  .warn {
+    border: 1px solid var(--warn-border); background: var(--warn-bg); border-radius: 10px;
+    padding: 14px 16px; margin: 0 0 8px; font-size: 14.5px;
+  }
+  .warn strong { color: var(--warn-fg); }
+  :root { --warn-bg: #fff8e6; --warn-border: #e5c07b; --warn-fg: #7a4f01; }
+  @media (prefers-color-scheme: dark) {
+    :root { --warn-bg: #2b2100; --warn-border: #6b5300; --warn-fg: #f0c674; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="mark" aria-hidden="true">⌘</span>
+  <h1>x402-browser-bridge</h1>
+  <p class="tagline">Turns any website flow into an x402-paid API — declare a flow in YAML, Puppeteer executes it, and the extracted data, screenshots and step log come back in the response body. Pay in USDC on Base or Solana; the client picks the rail.</p>
+  <div class="pills">
+    <span class="pill">Paid with <strong>HTTP 402</strong></span>
+    <span class="pill">USDC on <strong>Base</strong></span>
+    <span class="pill">or <strong>Solana</strong></span>
+    <span class="pill">Your client picks the rail</span>
+  </div>
+  <p class="warn"><strong>⚠️ Terms of service.</strong> Automating a website you do not
+  own may breach its terms of service. The bundled flows target demo pages this server
+  hosts itself; a flow marked <code>authorized: false</code> has not been declared as
+  permitted by its author. The operator of a deployment is responsible for the legality
+  of every flow it serves — read the
+  <a href="https://github.com/nirholas/x402-browser-bridge#readme">README's terms-of-service
+  section</a> before pointing a flow anywhere else.</p>
+
+  <h2>Paid endpoints</h2>
+  <div class="scroll"><table class="table">
+    <tr><th>Endpoint</th><th>Price</th><th>What you get</th></tr>
+    <tr><td><code><span class="m">POST</span> /run/{flow}</code></td><td class="price">$0.05</td><td class="desc">Execute a declared browser flow and return its artifact</td></tr>
+  </table></div>
+
+  <h2>Free endpoints</h2>
+  <div class="scroll"><table class="table">
+    <tr><th>Endpoint</th><th>What it does</th></tr>
+    <tr><td><code><span class="m">GET</span> /flows</code></td><td class="desc">Every declared flow with its inputs, extracted fields, price and host allowlist</td></tr>
+    <tr><td><code><span class="m">POST</span> /verify</code></td><td class="desc">Verify the HMAC signature on a run record</td></tr>
+    <tr><td><code><span class="m">GET</span> /health</code></td><td class="desc">Liveness, payment rails, flow count and browser availability</td></tr>
+    <tr><td><code><span class="m">GET</span> /.well-known/x402</code></td><td class="desc">x402 discovery manifest</td></tr>
+  </table></div>
+
+  <h2>Call it</h2>
+  <pre><code>curl -i -X POST http://localhost:4034/run/{flow} \
+  -H &#x27;content-type: application/json&#x27; -d &#x27;{}&#x27;</code></pre>
+  <p class="desc">An unpaid request returns <code>402</code> with an <code>accepts</code> array holding both
+  rails, each carrying <code>outputSchema.input</code> / <code>outputSchema.output</code> — everything an
+  agent needs to pay and then call the route correctly.</p>
+
+  <footer>
+    <a href="/openapi.json">OpenAPI</a> ·
+    <a href="/.well-known/x402">x402 manifest</a> ·
+    <a href="https://github.com/nirholas/x402-browser-bridge">Source</a> ·
+    <a href="https://nirholas.github.io/x402-browser-bridge/">Docs</a>
+  </footer>
+</div>
+</body>
+</html>

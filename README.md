@@ -120,7 +120,7 @@ Steps: `goto` · `click` · `type` · `select` · `press` · `waitFor` · `waitF
 
 Still a `200`. The payment settled before the browser started, so a bare 500 would take the money and teach the caller nothing. Instead you get the step that broke, the page at that moment, and whatever the site said — which is usually the actual answer ("no tables available"), not a bug.
 
-**What fails *free*, before payment:** unknown flow (404), malformed inputs (400), and no browser available (503). Those are checked ahead of the paywall, so you are never charged for a run that could not have happened.
+**What fails *free*, before payment:** unknown flow (404), malformed inputs (400), and no browser available (503). Those are checked ahead of the paywall, so you are never charged for a run that could not have happened. These checks run on the attempt that carries `X-PAYMENT`, before the payment is verified or settled — so they cost nothing. An unpaid request always gets the 402 challenge first, whatever flow name it names: that is how a directory or an agent discovers the route's price and input schema.
 
 ## Both rails, always
 

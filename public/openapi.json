@@ -39,7 +39,7 @@
         ],
         "operationId": "runFlow",
         "summary": "Execute a declared browser flow and return its artifact",
-        "description": "Price comes from the flow definition (bundled flows: $0.05 USDC). Returns 200 with a signed run record whether the flow completed or failed — on failure the step log and failure screenshot are the artifact. Unknown flow (404), invalid inputs (400) and no browser (503) are checked BEFORE payment, so those cost nothing.",
+        "description": "Price comes from the flow definition (bundled flows: $0.05 USDC). Returns 200 with a signed run record whether the flow completed or failed — on failure the step log and failure screenshot are the artifact. Unknown flow (404), invalid inputs (400) and no browser (503) are checked on the X-PAYMENT retry, before the payment is verified or settled, so those cost nothing. An unpaid request always receives the 402 challenge first — including for a flow name that does not exist — so the route stays discoverable.",
         "parameters": [
           {
             "name": "flow",
@@ -307,7 +307,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/verify": {
@@ -359,7 +360,8 @@
           "400": {
             "$ref": "#/components/responses/BadRequest"
           }
-        }
+        },
+        "security": []
       }
     },
     "/health": {
@@ -401,7 +403,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/.well-known/x402": {
@@ -422,7 +425,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     }
   },

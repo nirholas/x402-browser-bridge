@@ -117,8 +117,22 @@ $0.05 and seconds of wall clock per run — three orders of magnitude more than 
 
 [`examples/mcp-tool.md`](https://github.com/nirholas/x402-browser-bridge/blob/main/examples/mcp-tool.md) shows how to expose flows as Claude tools — including generating one tool per flow from `/flows`, and returning screenshots as image content so the model can look at the page itself.
 
-## 8. Getting listed
+## 8. Protocol version and schemas
 
+Every `accepts` entry carries `outputSchema.input` (how to build the request) and
+`outputSchema.output` (the JSON Schema of the 200 body), generated from
+`openapi.json`. A 402 is therefore enough on its own: pay, then call the route
+exactly as `input` describes and parse what `output` promises — no second fetch
+of the spec required.
+
+The challenges are **x402 v1** (`"x402Version": 1`), the version every deployed
+`x402-fetch` / `x402` client speaks today, including the examples in this repo.
+x402 v2 — CAIP-2 network ids, and `extensions.bazaar.schema` in place of
+`accepts[].outputSchema` — is a planned future upgrade for agentcash
+compatibility. Until then, a v2-only client should treat this service as v1;
+nothing else about the flow changes.
+
+## 9. Getting listed
 - **[x402scan.com](https://x402scan.com)** — point it at your `/.well-known/x402`.
 - **x402 Bazaar** — the protocol's own resource directory; same manifest format.
 - **[agentic.market](https://agentic.market)** — agent-facing marketplace listing.

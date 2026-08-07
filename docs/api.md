@@ -46,7 +46,7 @@ Body: the flow's declared inputs as JSON.
 
 `screenshots` values are raw base64 PNG with **no** data-URI prefix.
 
-**Pre-payment failures** — these cost nothing:
+**Pre-payment failures** — these cost nothing. They surface on the `X-PAYMENT` retry; an unpaid request to any `/run/<name>` returns the 402 challenge first, even for a flow that does not exist, so discovery works:
 
 | status | `error` | cause |
 |---|---|---|

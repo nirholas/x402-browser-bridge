@@ -1,10 +1,18 @@
 import "dotenv/config";
 import express from "express";
 import { readFileSync } from "node:fs";
-import { activeRails, mountSolanaCheckout, paymentReceipt, paywall, usingSuiteDefaultPayTo } from "./payments.js";
-import { loadFlows, validateInputs, InputValidationError, type Flow } from "./flow.js";
+import {
+  activeRails,
+  mountSolanaCheckout,
+  paymentReceipt,
+  paywall,
+  usingSuiteDefaultPayTo,
+  type RouteSchema,
+} from "./payments.js";
+import { loadFlows, validateInputs, inputFields, InputValidationError, type Flow } from "./flow.js";
 import { FlowRunner } from "./runner.js";
 import { signed, verify } from "./sign.js";
+import { ROUTE_SCHEMAS } from "./schemas.js";
 
 /**
  * x402-browser-bridge — turn a website flow into a paid API.
@@ -38,19 +46,59 @@ app.use(express.json({ limit: "128kb" }));
 
 // Prices come from the flow files themselves, so adding a flow adds a priced
 // route without touching this file.
+//
+// Each flow also gets its own 402 schema: the generic `/run/{flow}` contract
+// generated from openapi.json, with `bodyFields` narrowed to that flow's
+// declared inputs. The spec can only describe the route generically — flows are
+// loaded at boot — so the runtime challenge is where an agent learns that
+// `demo-catalog` wants `query` and `demo-booking` wants `name`/`email`/`date`.
+const runContract = ROUTE_SCHEMAS["POST /run/:flow"];
 const PRICES: Record<string, string> = {};
-for (const flow of flows.values()) PRICES[`POST /run/${flow.name}`] = flow.price;
+const SCHEMAS: Record<string, RouteSchema> = {};
+for (const flow of flows.values()) {
+  const route = `POST /run/${flow.name}`;
+  PRICES[route] = flow.price;
+  // `pathParams` is dropped: on a concrete per-flow route the flow name is
+  // already baked into the `resource` URL the challenge advertises.
+  const { pathParams: _flowName, ...input } = runContract.input;
+  SCHEMAS[route] = {
+    ...runContract,
+    input: { ...input, bodyType: "json", bodyFields: inputFields(flow) },
+  };
+}
+
+/**
+ * Catch-all for `/run/<anything>`, matched last because the per-flow keys above
+ * were inserted first.
+ *
+ * Every `POST /run/*` must answer an unpaid request with a 402 — that is how a
+ * directory or crawler discovers the route at all, and it probes with a
+ * synthetic flow name it invented. Without this entry an unknown flow would 404
+ * before the paywall ever ran, and the route would look unpriced. Paying against
+ * a flow that does not exist still costs nothing: the preflight below rejects it
+ * before the payment is verified or settled.
+ */
+const DEFAULT_RUN_PRICE = "$0.05"; // the price openapi.json advertises for /run/{flow}
+PRICES["POST /run/:flow"] = DEFAULT_RUN_PRICE;
+SCHEMAS["POST /run/:flow"] = runContract;
 
 /**
  * Preflight, mounted BEFORE the paywall.
  *
  * x402's `exact` scheme is pay-then-serve, so anything that makes a run
  * impossible must be caught here — while the caller still has their money.
- * Unknown flow, malformed inputs, or a browser that won't start all fail free.
- * Once past this point the run is genuinely attempted, and whatever happens
- * comes back as an artifact.
+ * Unknown flow, malformed inputs, or a browser that won't start all fail free:
+ * this runs before the paywall verifies or settles anything.
+ *
+ * It deliberately does nothing until the caller actually attempts payment. A
+ * request with no `X-PAYMENT` header is either a first attempt or a discovery
+ * probe, and both must fall through to the paywall and receive the 402
+ * challenge — a crawler probing `/run/<invented-name>` has to learn the route's
+ * price and schema, not a 404.
  */
 app.post("/run/:flow", async (req, res, next) => {
+  if (!req.header("X-PAYMENT")) return next();
+
   const flow = flows.get(req.params.flow);
   if (!flow) {
     res.status(404).json({
@@ -89,7 +137,13 @@ app.post("/run/:flow", async (req, res, next) => {
   next();
 });
 
-app.use(paywall(PRICES, { service: "x402-browser-bridge", baseUrl: process.env.PUBLIC_BASE_URL }));
+app.use(
+  paywall(PRICES, {
+    service: "x402-browser-bridge",
+    baseUrl: process.env.PUBLIC_BASE_URL,
+    schemas: SCHEMAS,
+  }),
+);
 
 /**
  * Execute the flow. Note the response is 200 even when the run fails: by this

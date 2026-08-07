@@ -316,6 +316,28 @@ export class InputValidationError extends Error {
   }
 }
 
+/**
+ * The flow's declared inputs as JSON-Schema properties.
+ *
+ * Used for `outputSchema.input.bodyFields` in the 402 challenge, so the paywall
+ * tells an agent exactly which body fields *this* flow wants — the OpenAPI
+ * document can only describe `/run/{flow}` generically, since flows are loaded
+ * from `flows/` at boot.
+ */
+export function inputFields(flow: Flow): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  for (const [name, spec] of Object.entries(flow.inputs)) {
+    fields[name] = {
+      type: spec.type ?? "string",
+      ...(spec.description ? { description: spec.description } : {}),
+      ...(spec.pattern ? { pattern: spec.pattern } : {}),
+      ...(spec.default !== undefined ? { default: spec.default } : {}),
+      ...(spec.required ? { "x-required": true } : {}),
+    };
+  }
+  return fields;
+}
+
 /** Check a request body against the flow's declared inputs, applying defaults. */
 export function validateInputs(flow: Flow, body: Record<string, unknown>): Record<string, unknown> {
   const resolved: Record<string, unknown> = {};
