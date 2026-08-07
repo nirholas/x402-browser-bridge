@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Demo Parts Co — catalogue</title>
+<style>
+  body { font: 16px/1.6 system-ui, sans-serif; max-width: 44rem; margin: 3rem auto; padding: 0 1.25rem; color: #1a1a1a; }
+  h1 { font-size: 1.5rem; margin-bottom: .25rem; }
+  p.lede { color: #57606a; margin-top: 0; }
+  .search { display: flex; gap: .5rem; margin: 1.5rem 0; }
+  input { flex: 1; padding: .5rem .6rem; font: inherit; border: 1px solid #d8dee4; border-radius: 7px; }
+  button { padding: .5rem 1.1rem; font: inherit; font-weight: 600; color: #fff; background: #0052ff; border: 0; border-radius: 7px; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+  th, td { text-align: left; padding: .55rem .5rem; border-bottom: 1px solid #d8dee4; font-size: .95rem; }
+  th { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: #57606a; }
+  .price { font-family: ui-monospace, Menlo, monospace; }
+  #empty { margin-top: 1.5rem; color: #57606a; }
+</style>
+</head>
+<body>
+  <h1>Demo Parts Co</h1>
+  <p class="lede">A price list behind a search box and no API — the classic case for a browser bridge. See <code>flows/demo-catalog.yaml</code>.</p>
+
+  <div class="search">
+    <input id="q" placeholder="Search parts…" autocomplete="off">
+    <button id="search">Search</button>
+  </div>
+
+  <div id="results" hidden>
+    <p id="count"></p>
+    <table>
+      <thead><tr><th>SKU</th><th>Part</th><th>Stock</th><th>Price</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <p id="empty" hidden>No parts matched that search.</p>
+
+<script>
+  const CATALOG = [
+    { sku: "BRG-6203", name: "Deep groove ball bearing 6203", stock: 214, price: 4.85 },
+    { sku: "BRG-6205", name: "Deep groove ball bearing 6205", stock: 96,  price: 7.40 },
+    { sku: "BLT-M8-40", name: "Hex bolt M8×40 (zinc)", stock: 1820, price: 0.22 },
+    { sku: "BLT-M10-60", name: "Hex bolt M10×60 (zinc)", stock: 640, price: 0.41 },
+    { sku: "SEAL-2540", name: "Rotary shaft seal 25×40×7", stock: 58, price: 3.10 },
+    { sku: "BELT-A38", name: "V-belt A38", stock: 0, price: 9.95 },
+    { sku: "GSK-COP-14", name: "Copper washer 14mm", stock: 430, price: 0.18 },
+  ];
+
+  function search() {
+    const query = document.getElementById("q").value.trim().toLowerCase();
+    const matches = query
+      ? CATALOG.filter((p) => p.sku.toLowerCase().includes(query) || p.name.toLowerCase().includes(query))
+      : CATALOG;
+
+    const rows = document.getElementById("rows");
+    rows.innerHTML = "";
+    for (const part of matches) {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td class="sku">' + part.sku + "</td>" +
+        '<td class="name">' + part.name + "</td>" +
+        '<td class="stock">' + (part.stock > 0 ? part.stock : "backorder") + "</td>" +
+        '<td class="price">$' + part.price.toFixed(2) + "</td>";
+      rows.appendChild(tr);
+    }
+    document.getElementById("count").textContent = matches.length + " part(s) found";
+    document.getElementById("results").hidden = matches.length === 0;
+    document.getElementById("empty").hidden = matches.length > 0;
+  }
+
+  document.getElementById("search").addEventListener("click", search);
+  document.getElementById("q").addEventListener("keydown", (e) => { if (e.key === "Enter") search(); });
+</script>
+</body>
+</html>

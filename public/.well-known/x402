@@ -1,0 +1,119 @@
+{
+  "x402Version": 1,
+  "name": "x402-browser-bridge",
+  "description": "Turns any website flow into an x402-paid API — declare a flow in YAML, Puppeteer executes it, and the extracted data, screenshots and step log come back in the response. Pay in USDC on Base or Solana; your client picks the rail.",
+  "contact": "nichxbt@gmail.com",
+  "repository": "https://github.com/nirholas/x402-browser-bridge",
+  "documentation": "https://nirholas.github.io/x402-browser-bridge/",
+  "skill": "https://raw.githubusercontent.com/nirholas/x402-browser-bridge/main/skill.md",
+  "notice": "Automating a website you do not own may breach its terms of service. The flows bundled with this repository target pages it serves itself. The operator of any deployment is responsible for the legality of every flow it serves.",
+  "rails": [
+    {
+      "rail": "evm",
+      "network": "base-sepolia",
+      "asset": "USDC",
+      "assetAddress": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+      "payTo": "0x40252CFDF8B20Ed757D61ff157719F33Ec332402",
+      "facilitator": "https://x402.org/facilitator"
+    },
+    {
+      "rail": "solana",
+      "network": "solana",
+      "asset": "USDC",
+      "assetAddress": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "payTo": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW",
+      "facilitator": "https://facilitator.payai.network"
+    }
+  ],
+  "resources": [
+    {
+      "resource": "POST /run/demo-booking",
+      "description": "Book a table on a site that has no API. Fills the reservation form, waits for the confirmation panel, and returns the booking reference, table and covers, plus screenshots and a per-step log.",
+      "price": "$0.05",
+      "networks": ["base-sepolia", "solana"],
+      "asset": "USDC",
+      "inputSchema": {
+        "type": "object",
+        "required": ["name", "email", "date"],
+        "properties": {
+          "name": { "type": "string", "description": "Guest name. Use \"unavailable\" to exercise the failure path." },
+          "email": { "type": "string", "format": "email" },
+          "date": { "type": "string", "pattern": "\\d{4}-\\d{2}-\\d{2}" },
+          "partySize": { "type": "string", "enum": ["1", "2", "4", "6", "8"], "default": "2" }
+        }
+      },
+      "outputSchema": { "$ref": "#/definitions/RunResponse" }
+    },
+    {
+      "resource": "POST /run/demo-catalog",
+      "description": "Search a catalogue that has no API and return the matching parts as structured rows — SKU, name, stock and price — plus a screenshot of the results table and a per-step log.",
+      "price": "$0.05",
+      "networks": ["base-sepolia", "solana"],
+      "asset": "USDC",
+      "inputSchema": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": { "type": "string", "description": "Search term, matched against SKU and part name." }
+        }
+      },
+      "outputSchema": { "$ref": "#/definitions/RunResponse" }
+    }
+  ],
+  "definitions": {
+    "RunResponse": {
+      "type": "object",
+      "required": ["run"],
+      "properties": {
+        "run": {
+          "type": "object",
+          "properties": {
+            "payload": {
+              "type": "object",
+              "properties": {
+                "flow": { "type": "string" },
+                "status": { "type": "string", "enum": ["completed", "failed"] },
+                "startedAt": { "type": "string", "format": "date-time" },
+                "finishedAt": { "type": "string", "format": "date-time" },
+                "durationMs": { "type": "number" },
+                "finalUrl": { "type": ["string", "null"] },
+                "extracted": { "type": "object", "description": "The values named by the flow's extract block" },
+                "screenshots": { "type": "object", "additionalProperties": { "type": "string", "description": "base64 PNG" } },
+                "steps": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "index": { "type": "number" },
+                      "action": { "type": "string" },
+                      "label": { "type": "string" },
+                      "status": { "type": "string", "enum": ["ok", "skipped", "failed"] },
+                      "durationMs": { "type": "number" },
+                      "detail": { "type": "string" },
+                      "error": { "type": "string" }
+                    }
+                  }
+                },
+                "error": { "type": "string", "description": "Present when status is failed" },
+                "inputs": { "type": "object" }
+              }
+            },
+            "signature": { "type": "string" },
+            "algorithm": { "type": "string", "enum": ["HMAC-SHA256"] }
+          }
+        },
+        "flow": { "type": "object", "properties": { "name": { "type": "string" }, "description": { "type": "string" }, "price": { "type": "string" } } },
+        "paidWith": { "type": "object" }
+      }
+    }
+  },
+  "free": [
+    { "resource": "GET /flows", "description": "Every declared flow with its inputs, extracted fields, price and host allowlist" },
+    { "resource": "POST /verify", "description": "Verify the HMAC signature on a run record" },
+    { "resource": "GET /health", "description": "Liveness, payment rails, flow count and browser availability" }
+  ],
+  "library": {
+    "npm": "x402-browser-bridge",
+    "exports": ["loadFlows", "parseFlow", "validateInputs", "FlowRunner", "paywall", "sign", "verify"]
+  }
+}

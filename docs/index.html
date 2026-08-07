@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>x402-browser-bridge — website flows as paid APIs</title>
+<meta name="description" content="Declare a website flow in YAML, Puppeteer executes it, and the extracted data, screenshots and step log come back in an x402-paid response. USDC on Base or Solana.">
+<style>
+  :root {
+    --accent: #0052ff;
+    --solana: #14f195;
+    --bg: #ffffff;
+    --bg-soft: #f6f8fa;
+    --fg: #1a1a1a;
+    --fg-soft: #57606a;
+    --border: #d8dee4;
+    --code-bg: #f6f8fa;
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --bg-soft: #161b22;
+      --fg: #e6edf3;
+      --fg-soft: #9198a1;
+      --border: #30363d;
+      --code-bg: #161b22;
+      --accent: #4d8bff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 20px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  header { padding: 72px 0 48px; border-bottom: 1px solid var(--border); }
+  .eyebrow {
+    display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 14px;
+  }
+  h1 { font-size: clamp(32px, 6vw, 46px); line-height: 1.1; margin: 0 0 14px; letter-spacing: -.02em; }
+  .tagline { font-size: clamp(17px, 2.6vw, 21px); color: var(--fg-soft); margin: 0 0 28px; max-width: 640px; }
+  .rails { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 26px; }
+  .pill {
+    font-size: 13px; padding: 4px 11px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--bg-soft); color: var(--fg-soft);
+  }
+  .pill strong { color: var(--fg); font-weight: 600; }
+  .cta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .btn {
+    display: inline-block; padding: 9px 18px; border-radius: var(--radius); font-weight: 600; font-size: 15px;
+    background: var(--accent); color: #fff; border: 1px solid var(--accent);
+  }
+  .btn:hover { text-decoration: none; filter: brightness(1.08); }
+  .btn.ghost { background: transparent; color: var(--fg); border-color: var(--border); }
+  h2 { font-size: 24px; margin: 52px 0 14px; letter-spacing: -.01em; }
+  h3 { font-size: 17px; margin: 28px 0 8px; }
+  p { margin: 0 0 14px; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.55;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  code { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: .92em; }
+  p code, li code, td code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: 14.5px; display: block; overflow-x: auto; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--fg-soft); font-weight: 600; }
+  tbody tr:last-child td { border-bottom: none; }
+  .price { font-weight: 600; color: var(--accent); white-space: nowrap; }
+  .flow { margin: 20px 0 28px; }
+  .flow svg { width: 100%; height: auto; max-width: 720px; display: block; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 18px 0 8px; }
+  .card { border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; background: var(--bg-soft); }
+  .card h3 { margin: 0 0 5px; font-size: 15px; }
+  .card p { margin: 0; font-size: 14px; color: var(--fg-soft); }
+  .warn {
+    border: 1px solid #d1242f; border-left-width: 4px; border-radius: var(--radius);
+    background: rgba(209, 36, 47, .06); padding: 14px 18px; margin: 22px 0;
+  }
+  .warn strong { color: #d1242f; }
+  @media (prefers-color-scheme: dark) { .warn { background: rgba(248, 81, 73, .1); border-color: #f85149; } .warn strong { color: #ff7b72; } }
+  footer { margin: 64px 0 40px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--fg-soft); font-size: 14px; }
+  footer a { color: var(--fg-soft); text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">x402 Suite · infrastructure</span>
+    <h1>x402-browser-bridge</h1>
+    <p class="tagline">Turn a website flow into a paid API. Declare it in YAML, Puppeteer executes it, and the extracted data, screenshots and step log come back in the response.</p>
+    <div class="rails">
+      <span class="pill">Pay in <strong>USDC on Base</strong></span>
+      <span class="pill">or <strong>USDC on Solana</strong></span>
+      <span class="pill">YAML flows, no code</span>
+    </div>
+    <pre><code>npm install x402-browser-bridge</code></pre>
+    <div class="cta">
+      <a class="btn" href="https://github.com/nirholas/x402-browser-bridge">GitHub</a>
+      <a class="btn ghost" href="./tutorial.md">Tutorial</a>
+      <a class="btn ghost" href="./api.md">API reference</a>
+      <a class="btn ghost" href="./agents.md">For agents</a>
+    </div>
+  </header>
+
+  <div class="warn">
+    <p><strong>⚠️ Terms of service.</strong> Automating a website you do not own or have permission to automate may breach its terms of service, and in some jurisdictions may break the law. This is a tool for driving browsers; it cannot know whether you are allowed to drive a particular one.</p>
+    <p>Before pointing a flow at a site that isn't yours: read its terms, check <code>robots.txt</code>, never automate an authenticated session you don't own, don't circumvent CAPTCHAs or rate limits, and treat extracted personal data as regulated data. Reselling a paid bridge over someone else's site turns a terms problem into a commercial one — with you as the party charging.</p>
+    <p><strong>Every flow bundled with this repository targets a page the repository serves itself.</strong> No third-party site is automated by anything shipped here. That is the model to copy. If you deploy it, you are the operator, and the legality of every flow you serve is yours.</p>
+  </div>
+
+  <h2>The problem</h2>
+  <p>An enormous amount of commerce still lives behind a form. No API, no partner programme, no webhook — just a page, a submit button, and a confirmation screen. An agent that can pay for things cannot use any of it.</p>
+  <p>A bridge closes that gap: declare the click path once, expose it as an x402 endpoint, and the agent buys the outcome without ever knowing a browser was involved.</p>
+
+  <h2>Pricing</h2>
+  <table>
+    <thead><tr><th>Route</th><th>Price</th><th>What you get back</th></tr></thead>
+    <tbody>
+      <tr><td><code>POST /run/:flow</code></td><td class="price">$0.05</td><td>Signed <code>{ extracted, screenshots, steps }</code> in the 200 body</td></tr>
+      <tr><td><code>GET /flows</code></td><td class="price">free</td><td>Every declared flow: inputs, extracted fields, price, host allowlist</td></tr>
+      <tr><td><code>POST /verify</code></td><td class="price">free</td><td>Signature check on a run record</td></tr>
+      <tr><td><code>GET /health</code></td><td class="price">free</td><td>Liveness, rails, flow count, browser availability</td></tr>
+    </tbody>
+  </table>
+  <p>Prices come from the flow files, so <strong>adding a YAML file adds a priced route</strong> — no code change.</p>
+
+  <h2>A flow</h2>
+  <pre><code>name: demo-booking
+price: "$0.05"
+allowHosts: [localhost, 127.0.0.1]     # the security boundary. Required.
+
+inputs:
+  name:  { type: string, required: true }
+  email: { type: string, required: true, pattern: '[^@\s]+@[^@\s]+\.[^@\s]+' }
+  date:  { type: string, required: true, pattern: '\d{4}-\d{2}-\d{2}' }
+
+steps:
+  - goto: "{{baseUrl}}/demo/booking.html"
+  - type:   { selector: "#name",  value: "{{inputs.name}}" }
+  - type:   { selector: "#email", value: "{{inputs.email}}" }
+  - select: { selector: "#party", value: "{{inputs.partySize}}" }
+  - screenshot: form
+  - click: "#submit"
+  - waitFor: "#confirmation:not([hidden])"
+    timeoutMs: 8000
+  - screenshot: confirmation
+
+extract:
+  reference: { selector: "#reference" }
+  errorMessage: { selector: "#error:not([hidden])", optional: true }</code></pre>
+  <p>Steps: <code>goto</code> · <code>click</code> · <code>type</code> · <code>select</code> · <code>press</code> · <code>waitFor</code> · <code>waitForText</code> · <code>wait</code> · <code>scroll</code> · <code>screenshot</code>. <strong>A flow cannot execute arbitrary JavaScript</strong> — templating is <code>{{inputs.x}}</code> and <code>{{baseUrl}}</code>, nothing more. Adding a flow is a config change with a reviewable diff.</p>
+
+  <h2>Failure is an artifact, not an error</h2>
+  <div class="flow">
+    <svg viewBox="0 0 720 190" role="img" aria-label="Unknown flow, bad inputs and no browser fail free before the paywall; past it, both completed and failed runs return a 200 artifact">
+      <defs>
+        <marker id="ar4" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6 z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g fill="none" stroke="currentColor" stroke-width="1.5" opacity=".85" marker-end="url(#ar4)">
+        <path d="M96 52 H166"/>
+        <path d="M274 52 H344"/>
+        <path d="M452 52 H520"/>
+        <path d="M220 76 V128"/>
+        <path d="M586 68 V112"/>
+        <path d="M586 68 V152"/>
+      </g>
+      <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" fill="currentColor">
+        <text x="48" y="56" text-anchor="middle">POST /run</text>
+        <rect x="170" y="34" width="100" height="34" rx="7" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="220" y="55" text-anchor="middle" font-size="11">preflight</text>
+        <rect x="348" y="34" width="100" height="34" rx="7" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="398" y="55" text-anchor="middle" font-size="11">paywall</text>
+        <rect x="524" y="34" width="124" height="34" rx="7" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="586" y="55" text-anchor="middle" font-size="11">browser runs</text>
+        <text x="220" y="146" text-anchor="middle" font-size="10.5" opacity=".75">404 / 400 / 503</text>
+        <text x="220" y="162" text-anchor="middle" font-size="10.5" opacity=".6">free — not charged</text>
+        <text x="668" y="120" text-anchor="end" font-size="10.5" opacity=".8">200 completed</text>
+        <text x="668" y="160" text-anchor="end" font-size="10.5" opacity=".8">200 failed + step log</text>
+      </g>
+    </svg>
+  </div>
+  <p>A failed run is still a <code>200</code>: the payment settled before the browser started, so a bare 500 would take the money and teach the caller nothing. Instead you get the step that broke, a screenshot of the page at that moment, and whatever the site said — which is usually the actual answer ("no tables available"), not a bug.</p>
+  <p><strong>What fails free, before payment:</strong> unknown flow (404), malformed inputs (400), and no browser available (503).</p>
+
+  <h2>Safety model</h2>
+  <div class="cards">
+    <div class="card"><h3>Declarative flows</h3><p>No <code>eval</code>, no script injection, no dynamic selectors. YAML in, clicks out.</p></div>
+    <div class="card"><h3>Per-flow host allowlist</h3><p><code>allowHosts</code> is required. Off-site navigation is aborted at the request-interception layer, so even a redirect can't escape.</p></div>
+    <div class="card"><h3>Budgets</h3><p>Whole-run timeout (60s default, 180s cap), per-step timeouts, max 60 steps, 128 KB body limit.</p></div>
+  </div>
+
+  <h2>Both rails, always</h2>
+  <table>
+    <thead><tr><th>Rail</th><th>Network</th><th>payTo</th><th>Facilitator</th></tr></thead>
+    <tbody>
+      <tr><td>EVM</td><td><code>base-sepolia</code> / <code>base</code></td><td><code>0x40252CFDF8B20Ed757D61ff157719F33Ec332402</code></td><td>x402.org</td></tr>
+      <tr><td>Solana</td><td><code>solana</code> / <code>solana-devnet</code></td><td><code>WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW</code></td><td>PayAI</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Docs</h2>
+  <div class="cards">
+    <a class="card" href="./tutorial.md"><h3>Tutorial →</h3><p>Run it, pay a 402, execute a flow, then write your own.</p></a>
+    <a class="card" href="./api.md"><h3>API reference →</h3><p>Every route, every step type, the full flow schema.</p></a>
+    <a class="card" href="./agents.md"><h3>For AI agents →</h3><p>Discovery, both rails, screenshots into vision models, MCP.</p></a>
+    <a class="card" href="https://github.com/nirholas/x402-browser-bridge/blob/main/skill.md"><h3>skill.md →</h3><p>The agent-facing contract in one file.</p></a>
+    <a class="card" href="https://github.com/nirholas/x402-browser-bridge/blob/main/public/.well-known/x402"><h3>.well-known/x402 →</h3><p>Machine-readable manifest for x402 indexes.</p></a>
+    <a class="card" href="https://github.com/nirholas/x402-browser-bridge/blob/main/openapi.json"><h3>OpenAPI 3.1 →</h3><p>Including the 402 response and PaymentRequirements schema.</p></a>
+  </div>
+
+  <footer>
+    <p>Part of the <a href="https://github.com/nirholas/x402-suite">x402 Suite</a> · Apache-2.0 · <a href="mailto:nichxbt@gmail.com">nichxbt@gmail.com</a></p>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,61 @@
+# Demo flow: scrape a search-gated price list into structured rows.
+#
+# Same self-hosted target rule as demo-booking.yaml — the page lives in this
+# repository. Read the README's ToS section before pointing a flow at a site
+# you do not control.
+
+name: demo-catalog
+description: >-
+  Search a catalogue that has no API and return the matching parts as structured
+  rows — SKU, name, stock and price.
+price: "$0.05"
+
+allowHosts:
+  - localhost
+  - 127.0.0.1
+
+authorized: true
+authorizationNote: >-
+  The target page is served by this repository. No third-party site is automated.
+
+timeoutMs: 30000
+
+inputs:
+  query:
+    type: string
+    required: true
+    description: Search term, matched against SKU and part name. Try "bolt" or "bearing".
+
+steps:
+  - label: open the catalogue
+    goto: "{{baseUrl}}/demo/catalog.html"
+
+  - label: enter the search term
+    type:
+      selector: "#q"
+      value: "{{inputs.query}}"
+
+  - label: run the search
+    click: "#search"
+
+  - label: wait for results
+    waitFor: "#results:not([hidden]) tbody tr"
+
+  - label: capture the results table
+    screenshot: results
+
+extract:
+  matchCount:
+    selector: "#count"
+  skus:
+    selector: "#rows .sku"
+    all: true
+  names:
+    selector: "#rows .name"
+    all: true
+  stock:
+    selector: "#rows .stock"
+    all: true
+  prices:
+    selector: "#rows .price"
+    all: true

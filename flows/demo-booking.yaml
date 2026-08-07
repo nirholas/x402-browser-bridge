@@ -1,0 +1,106 @@
+# Demo flow: fill a reservation form that has no API and return the confirmation.
+#
+# The target is a page this repo serves itself (public/demo/booking.html), so the
+# flow always has something stable to run against and no third party's terms are
+# involved. Point `allowHosts` and the `goto` step at a real site only when you
+# are permitted to automate it — see the ToS warning in the README.
+
+name: demo-booking
+description: >-
+  Book a table on a site that has no API. Fills the reservation form, waits for
+  the confirmation panel, and returns the booking reference, table and covers.
+price: "$0.05"
+
+# The only hosts this flow may reach. Anything else is aborted mid-navigation.
+allowHosts:
+  - localhost
+  - 127.0.0.1
+
+authorized: true
+authorizationNote: >-
+  The target page is served by this repository. No third-party site is automated.
+
+timeoutMs: 45000
+viewport:
+  width: 1280
+  height: 900
+
+inputs:
+  name:
+    type: string
+    required: true
+    description: Guest name on the reservation. Use "unavailable" to exercise the failure path.
+  email:
+    type: string
+    required: true
+    description: Contact email.
+    pattern: '[^@\s]+@[^@\s]+\.[^@\s]+'
+  date:
+    type: string
+    required: true
+    description: Reservation date, YYYY-MM-DD.
+    pattern: '\d{4}-\d{2}-\d{2}'
+  partySize:
+    type: string
+    default: "2"
+    description: Covers. One of 1, 2, 4, 6, 8.
+    pattern: '1|2|4|6|8'
+
+steps:
+  - label: open the reservation form
+    goto: "{{baseUrl}}/demo/booking.html"
+
+  - label: fill in the guest name
+    type:
+      selector: "#name"
+      value: "{{inputs.name}}"
+
+  - label: fill in the email
+    type:
+      selector: "#email"
+      value: "{{inputs.email}}"
+
+  - label: fill in the date
+    type:
+      selector: "#date"
+      value: "{{inputs.date}}"
+
+  - label: choose the party size
+    select:
+      selector: "#party"
+      value: "{{inputs.partySize}}"
+
+  - label: capture the completed form
+    screenshot: form
+
+  - label: submit the request
+    click: "#submit"
+
+  # The page confirms asynchronously, so this is a real wait rather than a
+  # decorative one. If the site starts rejecting the booking, this is the step
+  # that fails — and the step log says so, with a screenshot attached.
+  # Per-step timeout: the page confirms in well under a second, so waiting the
+  # default 30s to learn it failed would just burn the caller's time.
+  - label: wait for the confirmation panel
+    waitFor: "#confirmation:not([hidden])"
+    timeoutMs: 8000
+
+  - label: capture the confirmation
+    screenshot: confirmation
+
+extract:
+  reference:
+    selector: "#reference"
+  guest:
+    selector: "#guest"
+  when:
+    selector: "#when"
+  covers:
+    selector: "#covers"
+  table:
+    selector: "#table"
+  # Present only on the failure path. Optional, so a successful run doesn't fail
+  # for want of an error message.
+  errorMessage:
+    selector: "#error:not([hidden])"
+    optional: true

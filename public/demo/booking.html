@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Demo Bistro — reservations</title>
+<style>
+  body { font: 16px/1.6 system-ui, sans-serif; max-width: 34rem; margin: 3rem auto; padding: 0 1.25rem; color: #1a1a1a; }
+  h1 { font-size: 1.5rem; margin-bottom: .25rem; }
+  p.lede { color: #57606a; margin-top: 0; }
+  label { display: block; margin: 1rem 0 .25rem; font-weight: 600; font-size: .9rem; }
+  input, select { width: 100%; padding: .5rem .6rem; font: inherit; border: 1px solid #d8dee4; border-radius: 7px; }
+  button { margin-top: 1.5rem; padding: .6rem 1.2rem; font: inherit; font-weight: 600; color: #fff; background: #0052ff; border: 0; border-radius: 7px; cursor: pointer; }
+  #confirmation { margin-top: 2rem; padding: 1.25rem; border: 1px solid #1a7f37; border-radius: 9px; background: #eaf6ec; }
+  #error { margin-top: 1.5rem; padding: 1rem; border: 1px solid #d1242f; border-radius: 9px; background: #fdeceb; }
+  dt { font-weight: 600; font-size: .82rem; color: #57606a; text-transform: uppercase; letter-spacing: .04em; }
+  dd { margin: 0 0 .6rem; font-family: ui-monospace, Menlo, monospace; }
+</style>
+</head>
+<body>
+  <h1>Demo Bistro</h1>
+  <p class="lede">A reservation form with no API. This page exists so the bridge has a target it fully controls — see <code>flows/demo-booking.yaml</code>.</p>
+
+  <form id="booking-form">
+    <label for="name">Name</label>
+    <input id="name" name="name" required autocomplete="off">
+
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" required autocomplete="off">
+
+    <label for="date">Date</label>
+    <input id="date" name="date" type="date" required>
+
+    <label for="party">Party size</label>
+    <select id="party" name="party">
+      <option value="1">1</option>
+      <option value="2" selected>2</option>
+      <option value="4">4</option>
+      <option value="6">6</option>
+      <option value="8">8</option>
+    </select>
+
+    <button id="submit" type="submit">Request table</button>
+  </form>
+
+  <div id="error" hidden></div>
+
+  <div id="confirmation" hidden>
+    <h2 style="margin-top:0;font-size:1.1rem">Table confirmed</h2>
+    <dl>
+      <dt>Reference</dt><dd id="reference"></dd>
+      <dt>Guest</dt><dd id="guest"></dd>
+      <dt>When</dt><dd id="when"></dd>
+      <dt>Covers</dt><dd id="covers"></dd>
+      <dt>Table</dt><dd id="table"></dd>
+    </dl>
+  </div>
+
+<script>
+  // Deterministic on purpose: the same inputs always produce the same reference,
+  // so a flow's output can be asserted in a test.
+  function referenceFor(seed) {
+    let hash = 0;
+    for (const char of seed) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+    return "DB-" + hash.toString(36).toUpperCase().padStart(6, "0").slice(0, 6);
+  }
+
+  document.getElementById("booking-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const date = document.getElementById("date").value;
+    const party = document.getElementById("party").value;
+
+    const errorBox = document.getElementById("error");
+    const confirmation = document.getElementById("confirmation");
+    errorBox.hidden = true;
+    confirmation.hidden = true;
+
+    // One deliberate failure path, so the "what happens when a flow breaks"
+    // branch is reachable without vandalising the page.
+    if (name.toLowerCase() === "unavailable") {
+      errorBox.textContent = "No tables available for that name. Please try another time.";
+      errorBox.hidden = false;
+      return;
+    }
+
+    // A short delay so `waitFor` steps are exercising something real.
+    setTimeout(() => {
+      document.getElementById("reference").textContent = referenceFor(name + date + party);
+      document.getElementById("guest").textContent = name + " <" + email + ">";
+      document.getElementById("when").textContent = date + " 19:30";
+      document.getElementById("covers").textContent = party;
+      document.getElementById("table").textContent = "T" + ((party > 4) ? "12" : "07");
+      confirmation.hidden = false;
+    }, 400);
+  });
+</script>
+</body>
+</html>
