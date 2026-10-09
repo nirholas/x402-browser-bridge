@@ -189,3 +189,7 @@ Part of the [x402 Suite](https://github.com/nirholas/x402-suite).
 ## License
 
 Apache-2.0 — see [LICENSE](./LICENSE). The licence grants you rights to *this software*; it grants you nothing with respect to any website you point it at.
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=nirholas/x402-browser-bridge&type=Date)](https://www.star-history.com/#nirholas/x402-browser-bridge&Date)
