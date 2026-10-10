@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: "x402-browser-bridge"
+abstract: "Framework that turns any website flow into an x402-paid API: declare a flow in YAML, Puppeteer executes, artifact returned in-response"
+license: Apache-2.0
+repository-code: "https://github.com/nirholas/x402-browser-bridge"
+url: "https://three.ws"
+authors:
+  - name: three.ws
+    website: "https://three.ws"

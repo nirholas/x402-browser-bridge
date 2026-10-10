@@ -1,0 +1,28 @@
+# x402-browser-bridge
+
+> Framework that turns any website flow into an x402-paid API: declare a flow in YAML, Puppeteer executes, artifact returned in-response
+
+x402-browser-bridge is an open-source repository by nirholas, part of the three.ws ecosystem.
+
+## Docs
+
+- [README](https://github.com/nirholas/x402-browser-bridge/blob/HEAD/README.md): install, usage and reference
+- [⚠️ Terms of service: read this first](https://github.com/nirholas/x402-browser-bridge/blob/HEAD/README.md#terms-of-service-read-this-first)
+- [The problem](https://github.com/nirholas/x402-browser-bridge/blob/HEAD/README.md#the-problem)
+- [Why x402 for this](https://github.com/nirholas/x402-browser-bridge/blob/HEAD/README.md#why-x402-for-this)
+- [Quickstart](https://github.com/nirholas/x402-browser-bridge/blob/HEAD/README.md#quickstart)
+- [API](https://github.com/nirholas/x402-browser-bridge/blob/HEAD/README.md#api)
+- [A flow](https://github.com/nirholas/x402-browser-bridge/blob/HEAD/README.md#a-flow)
+- [Failure is an artifact, not an error](https://github.com/nirholas/x402-browser-bridge/blob/HEAD/README.md#failure-is-an-artifact-not-an-error)
+- [Both rails, always](https://github.com/nirholas/x402-browser-bridge/blob/HEAD/README.md#both-rails-always)
+- [AGENTS.md](https://github.com/nirholas/x402-browser-bridge/blob/HEAD/AGENTS.md): guidance for coding agents
+- [Full text for LLMs](https://github.com/nirholas/x402-browser-bridge/blob/HEAD/llms-full.txt): the README inlined
+
+## Project
+
+- [Source](https://github.com/nirholas/x402-browser-bridge)
+- [Issues](https://github.com/nirholas/x402-browser-bridge/issues)
+- [Discussions](https://github.com/nirholas/x402-browser-bridge/discussions)
+- [Homepage](https://nirholas.github.io/x402-browser-bridge/)
+- [three.ws](https://three.ws): the platform this is part of
+- [All repositories by nirholas](https://github.com/nirholas/nirholas#readme)
