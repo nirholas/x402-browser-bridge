@@ -50,7 +50,7 @@
     "@three-ws/x402-payment-modal": "^1.2.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
-    "puppeteer": "^24.0.0",
+    "puppeteer": "^25.17.0",
     "viem": "^2.21.0",
     "x402": "^1.2.0",
     "yaml": "^2.6.1"
@@ -63,7 +63,7 @@
     "x402-fetch": "^1.2.0"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22.12"
   },
   "overrides": {
     "decode-uri-component@<=0.5.0": "^0.5.1",

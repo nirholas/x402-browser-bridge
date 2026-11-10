@@ -15,7 +15,7 @@ npm install       # downloads Chromium — the big step
 cp .env.example .env
 ```
 
-Node 18+. If the Chromium download is blocked in your environment, install one yourself and point at it:
+Node 22.12+ (Puppeteer 25 requires it). If the Chromium download is blocked in your environment, install one yourself and point at it:
 
 ```bash
 apt-get install -y chromium
