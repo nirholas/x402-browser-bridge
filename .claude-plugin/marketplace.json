@@ -1,0 +1,22 @@
+{
+  "name": "x402-browser-bridge",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "Framework that turns a declared website flow into an x402-paid API run by headless Puppeteer.",
+  "plugins": [
+    {
+      "name": "x402-browser-bridge",
+      "source": "./plugins/x402-browser-bridge",
+      "description": "Framework that turns a declared website flow into an x402-paid API run by headless Puppeteer.",
+      "category": "automation",
+      "tags": [
+        "x402",
+        "puppeteer",
+        "browser-automation",
+        "agents",
+        "api"
+      ]
+    }
+  ]
+}
